@@ -1,0 +1,37 @@
+.company-primary-background {
+  background: #ff6600 !important;
+}
+
+.company-secondary-background {
+  background: #f5f6fa !important;
+}
+
+.react-calander-bg {
+  border: none !important;
+  background: transparent !important;
+}
+
+.calander-box {
+  height: 16px;
+  width: 16px;
+  background: #3a76d6;
+  border-radius: 50%;
+}
+
+.events {
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+/* default */
+.p-sidebar .p-sidebar-content{
+    padding: 0 !important;
+}
+
+.p-sidebar .p-sidebar-header{
+    padding: 0 !important;
+}
+
+.scrollOff::-webkit-scrollbar {
+  display: none;
+}
