@@ -26,6 +26,9 @@ const AddMeeting = ({
   handleCreateEvent,
   setViewEvent,
   setEventEditMode,
+  setEndTimeErr,
+  endTimeErr,
+  watch,
 }) => {
   const handleTextChange = (e) => {
     setEventDescription(e.htmlValue);
@@ -188,19 +191,91 @@ const AddMeeting = ({
       return obj;
     });
 
-    setEvents(newState);
-    setAddEventSidebar(false);
-    setViewEvent(false);
-    setEventEditMode(false);
+    if (endMoment.isBefore(startMoment)) {
+      setEndTimeErr("EndTime cant't be greater than StartTime");
+    } else {
+      setEndTimeErr("");
+      setEvents(newState);
+      setAddEventSidebar(false);
+      setViewEvent(false);
+      setEventEditMode(false);
+      setEventDescription("");
+    }
   };
 
+  const validateStartTime = (value, context) => {
+    if (!value) {
+      return true; // Return true if the field is empty (you can handle this case differently)
+    }
+
+    const [hours, minutes] = value.split(":").map(Number);
+
+    // Get the current time
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+
+    if (context.isToday) {
+      if (
+        hours < currentHours || // Hours are earlier than current time
+        (hours === currentHours && minutes <= currentMinutes) // Same hour but minutes are earlier
+      ) {
+        return "Please enter a valid time";
+      }
+    } else {
+      if (
+        hours > 24 || // Hours should not exceed 24
+        (hours === 24 && minutes > 0) || // Hours are 24, but minutes are greater than 0
+        minutes >= 60 // Minutes should not exceed 59
+      ) {
+        return "Please enter a valid time";
+      }
+    }
+
+    return true;
+  };
+
+  const validateEndTime = (value, context) => {
+    if (!value) {
+      return true;
+    }
+
+    const [hours, minutes] = value.split(":").map(Number);
+    const [startHours, startMinutes] = context.startTime.split(":").map(Number);
+
+    // Get the current time
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+
+    if (context.isToday) {
+      if (
+        hours < currentHours || // Hours are earlier than current time
+        (hours === currentHours && minutes <= currentMinutes) || // Same hour but minutes are earlier
+        hours < startHours || // Hours are earlier than start time
+        (hours === startHours && minutes <= startMinutes) // Same hour but minutes are earlier than start time
+      ) {
+        return "Please enter a valid time";
+      }
+    } else {
+      if (
+        hours > 24 || // Hours should not exceed 24
+        (hours === 24 && minutes > 0) || // Hours are 24, but minutes are greater than 0
+        minutes >= 60 // Minutes should not exceed 59
+      ) {
+        return "Please enter a valid time";
+      }
+    }
+
+    return true;
+  };
   let required = true;
   return (
     <div>
-      <div className="flex justify-content-between align-items-center company-secondary-background p-3 mb-3">
+      <div className="flex justify-content-between align-items-center surface-300 p-3 mb-3">
         <div className="flex align-items-center">
           <i
-            className="pi pi-arrow-left mx-2 p-2 border-circle company-primary-background text-50 cursor-pointer"
+            className="pi pi-arrow-left mx-2 p-2 border-circle bg-blue-500 text-50 cursor-pointer"
             onClick={handleAddEventClose}
           />
           {eventEditMode ? (
@@ -248,7 +323,13 @@ const AddMeeting = ({
             control={control}
             errors={errors}
             required={required}
-            rules={{ required: "Start Time is required" }}
+            rules={{
+              required: "StartTime is required",
+              validate: (value) =>
+                validateStartTime(value, {
+                  isToday: moment(selectedDate).isSame(moment(), "day"),
+                }),
+            }}
             placeholder="HH:MM"
             mask="99:99"
             name="startTime"
@@ -258,11 +339,19 @@ const AddMeeting = ({
           <CustomInputMask
             control={control}
             errors={errors}
-            rules={{ required: "End Time is required" }}
+            rules={{
+              required: "EndTime is required",
+              validate: (value) =>
+                validateEndTime(value, {
+                  isToday: moment(selectedDate).isSame(moment(), "day"),
+                  startTime: watch("startTime"),
+                }),
+            }}
             name="endTime"
             mask="99:99"
             placeholder="HH:MM"
             required={required}
+            helpMsg={endTimeErr}
             labelId="End Time"
             className="md:col-4 col-12"
           />
@@ -291,7 +380,9 @@ const AddMeeting = ({
           />
         </div>
         <div className="col-12">
-          <label htmlFor="description" className="font-bold">Description</label>
+          <label htmlFor="description" className="font-bold">
+            Description
+          </label>
           <Editor
             value={eventDescription}
             name="description"
@@ -337,7 +428,7 @@ const AddMeeting = ({
           </div>
         )}
       </div>
-      <div className="fixed bottom-0 w-9 company-secondary-background">
+      <div className="fixed bottom-0 w-9 surface-300">
         <div className="flex justify-content-end px-5 py-2 align-items-center gap-4">
           <Button
             label="CANCEL"

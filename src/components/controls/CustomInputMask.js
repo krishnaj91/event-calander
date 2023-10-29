@@ -46,6 +46,7 @@ const CustomInputMask = ({
             value={field.value}
             {...rest}
           />
+          <small id="username-help" className='text-red-500'>{helpMsg}</small><br/>
           {getFormErrorMessage(errors, field.name)}
         </div>
       )}
